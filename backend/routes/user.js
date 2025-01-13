@@ -5,6 +5,7 @@ const { User } = require("../db");
 const userRouter = express.Router();
 const { z } = require("zod");
 const bcrypt = require("bcryptjs");
+const { authMiddleware } = require("../middleware"); // Import middleware
 
 const signupSchema = z.object({
   username: z.string(),
@@ -84,6 +85,58 @@ userRouter.post("/signin", async (req, res) => {
 
   res.json({
     token: token,
+  });
+});
+
+const updateBody = z.object({
+  password: z.string().optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+});
+
+userRouter.put("/", authMiddleware, async (req, res) => {
+  const { success } = updateBody.safeParse(req.body);
+  if (!success) {
+    res.status(411).json({
+      message: "Error while updating information",
+    });
+  }
+  await User.updateOne(
+    { _id: req.userId }, // Find the document by userId from the token
+    { $set: req.body } // Update fields from the request body
+  );
+  res.json({
+    message: "Updated successfully",
+  });
+});
+
+userRouter.get("/bulk", async (req, res) => {
+  const filter = req.query.filter;
+  console.log(filter);
+  if (!filter) {
+    return res.status(400).json({
+      message: "Please provide a name to filter by.",
+    });
+  }
+  const users = await User.find({
+    $or: [
+      { firstName: { $regex: filter, $options: "i" } },
+      { lastName: { $regex: filter, $options: "i" } },
+    ],
+  });
+  if (users.length === 0) {
+    return res.status(404).json({
+      message: "No users found matching the given filter",
+    });
+  }
+  console.log(users);
+  res.json({
+    user: users.map((user) => ({
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      _id: user._id,
+    })),
   });
 });
 
