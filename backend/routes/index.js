@@ -1,12 +1,10 @@
 const express = require("express");
-const userRouter = express.Router();
-const adminRouter = express.Router();
+const userRouter = require("./user");
+const adminRouter = require("./admin");
+const mainRouter = express.Router();
 
-userRouter.get("/login", (req, res) => {});
+mainRouter.use("/user", userRouter);
 
-adminRouter.get("/login", (req, res) => {});
+mainRouter.use("/admin", adminRouter);
 
-module.exports = {
-  userRouter,
-  adminRouter,
-};
+module.exports = mainRouter;
