@@ -27,8 +27,8 @@ userRouter.post("/signup", async (req, res) => {
       message: "Incorrect inputs",
     });
   }
-  const user = User.findOne({ username: input.username });
-  if (user._id) {
+  const user = await User.findOne({ username: input.username });
+  if (user) {
     return res.json({
       message: "User already exists",
     });
@@ -117,25 +117,25 @@ userRouter.put("/", authMiddleware, async (req, res) => {
 });
 
 userRouter.get("/bulk", async (req, res) => {
-  const filter = req.query.filter;
-  console.log(filter);
-  if (!filter) {
-    return res.status(400).json({
-      message: "Please provide a name to filter by.",
-    });
-  }
+  const filter = req.query.filter || "";
+  // console.log(filter);
+  // if (!filter) {
+  //   return res.status(400).json({
+  //     message: "Please provide a name to filter by.",
+  //   });
+  // }  // console.log(filter);
+ 
   const users = await User.find({
     $or: [
       { firstName: { $regex: filter, $options: "i" } },
       { lastName: { $regex: filter, $options: "i" } },
     ],
   });
-  if (users.length === 0) {
-    return res.status(404).json({
-      message: "No users found matching the given filter",
-    });
-  }
-  console.log(users);
+  // if (users.length === 0) {
+  //   return res.status(404).json({
+  //     message: "No users found matching the given filter",
+  //   });
+  // }
   res.json({
     user: users.map((user) => ({
       username: user.username,
